@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Cuaderno C1 y Analista</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Newsreader:opsz,wght@6..72,400;6..72,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a study notebook — sticky tab bar, one column of "sheets"; reading passages set in a book face, numbers in mono. */
+:root {
+  --bg: #f3f5f4;
+  --sheet: #ffffff;
+  --fg: #17211f;
+  --muted: #5b6965;
+  --line: #d9e0dd;
+  --c1: #1f6f5c;       /* C1 track: deep green */
+  --c1-soft: #e2f0eb;
+  --an: #8a2b3c;       /* analyst track: oxblood */
+  --an-soft: #f5e4e7;
+  --ok: #2c7a3f;
+  --ok-soft: #e1f2e4;
+  --bad: #b3372a;
+  --bad-soft: #fbe6e3;
+  --warn: #9a6a00;
+  --focus: #2457c5;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: system-ui, "Segoe UI", Roboto, sans-serif;
+  --f-read: "Newsreader", Georgia, "Times New Roman", serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --sheet: #172120; --fg: #e5ecea; --muted: #94a39f; --line: #2a3634;
+    --c1: #6cc6ac; --c1-soft: #1a3029; --an: #e58a9a; --an-soft: #3a1f25;
+    --ok: #74c98a; --ok-soft: #1b3122; --bad: #f08a7d; --bad-soft: #3b201c; --warn: #e2b04a; --focus: #8fb0ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --sheet: #172120; --fg: #e5ecea; --muted: #94a39f; --line: #2a3634;
+  --c1: #6cc6ac; --c1-soft: #1a3029; --an: #e58a9a; --an-soft: #3a1f25;
+  --ok: #74c98a; --ok-soft: #1b3122; --bad: #f08a7d; --bad-soft: #3b201c; --warn: #e2b04a; --focus: #8fb0ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.35rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 700; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+
+header.top { display: grid; gap: 14px; grid-template-columns: 1fr auto; align-items: end; padding-bottom: 16px; }
+.countdowns { display: flex; gap: 10px; flex-wrap: wrap; }
+.cd { background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 150px; }
+.cd .big { font-family: var(--f-mono); font-size: 1.5rem; font-weight: 600; }
+.cd input { font: inherit; font-size: 0.8rem; border: 0; background: transparent; color: var(--muted); padding: 0; }
+@media (max-width: 640px) { header.top { grid-template-columns: 1fr; } }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+nav.tabs button { font: inherit; font-weight: 600; background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--fg); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.sheet { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.chip.c1 { background: var(--c1-soft); color: var(--c1); }
+.chip.analyst { background: var(--an-soft); color: var(--an); }
+.chip.done { background: var(--ok-soft); color: var(--ok); }
+.chip.score-low { background: var(--bad-soft); color: var(--bad); }
+
+.card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); border-left: 4px solid var(--line); }
+.card.c1 { border-left-color: var(--c1); }
+.card.analyst { border-left-color: var(--an); }
+.card .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; }
+
+.btn { font: inherit; font-weight: 600; font-size: 0.88rem; border-radius: 8px; padding: 7px 14px; cursor: pointer; border: 1px solid var(--fg); background: var(--fg); color: var(--sheet); }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn.small { padding: 4px 10px; font-size: 0.8rem; }
+
+/* Today */
+.today { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .today { grid-template-columns: 1fr; } }
+.phase { font-family: var(--f-display); font-size: 1.1rem; }
+
+/* Calendar */
+.weeks { display: flex; flex-direction: column; gap: 10px; }
+.week { display: grid; grid-template-columns: 120px repeat(7, minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+.week .wk { font-size: 0.8rem; color: var(--muted); padding-top: 4px; }
+.week .wk b { display: block; color: var(--fg); font-family: var(--f-display); font-size: 0.95rem; }
+.day { border: 1px solid var(--line); border-radius: 8px; padding: 6px; font-size: 0.75rem; background: var(--sheet); min-height: 74px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.day.is-today { outline: 2px solid var(--fg); }
+.day.past { opacity: 0.6; }
+.day .d { font-family: var(--f-mono); color: var(--muted); }
+.day button.task { font: inherit; text-align: left; background: none; border: 0; padding: 2px 4px; border-radius: 4px; cursor: pointer; color: var(--fg); overflow-wrap: anywhere; }
+.day button.task.c1 { background: var(--c1-soft); }
+.day button.task.analyst { background: var(--an-soft); }
+.day button.task.done { text-decoration: line-through; opacity: 0.7; }
+.cal-scroll { overflow-x: auto; }
+.cal-inner { min-width: 760px; }
+
+/* Test runner */
+.runner-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timer { font-family: var(--f-mono); font-size: 1.2rem; font-weight: 600; }
+.timer.over { color: var(--bad); }
+.passage { font-family: var(--f-read); font-size: 1.08rem; line-height: 1.7; max-width: 68ch; }
+.passage p + p { margin-top: 0.9em; }
+.passage .gap { font-family: var(--f-mono); font-size: 0.85em; font-weight: 600; background: var(--c1-soft); color: var(--c1); padding: 0 4px; border-radius: 4px; }
+.split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.split .passage-col { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 56px); max-height: calc(100vh - 80px); overflow-y: auto; }
+@media (max-width: 820px) { .split { grid-template-columns: 1fr; } .split .passage-col { position: static; max-height: none; } }
+.q { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.q:first-child { border-top: 0; padding-top: 0; }
+.q .qn { font-family: var(--f-mono); font-weight: 600; color: var(--muted); }
+.q .prompt { white-space: pre-wrap; }
+.kwt { display: flex; flex-direction: column; gap: 4px; }
+.kwt .key { font-family: var(--f-mono); font-weight: 600; letter-spacing: 0.05em; }
+.opts { display: flex; flex-direction: column; gap: 4px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opts label:hover { border-color: var(--muted); }
+.opts input { margin-top: 4px; }
+.opts .L { font-family: var(--f-mono); font-weight: 600; }
+.opts label.correct { border-color: var(--ok); background: var(--ok-soft); }
+.opts label.wrong { border-color: var(--bad); background: var(--bad-soft); }
+input.txt { font: inherit; font-family: var(--f-mono); padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); width: 100%; max-width: 420px; }
+input.txt.correct { border-color: var(--ok); background: var(--ok-soft); }
+input.txt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.expl { font-size: 0.9rem; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px dashed var(--line); }
+.expl b { font-family: var(--f-mono); }
+.result { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 14px; border-radius: 10px; background: var(--bg); }
+.result .score { font-family: var(--f-mono); font-size: 2rem; font-weight: 600; }
+textarea { font: inherit; font-family: var(--f-read); font-size: 1.02rem; width: 100%; min-height: 260px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+.model { white-space: pre-wrap; font-family: var(--f-read); font-size: 1.02rem; line-height: 1.65; }
+.guidance { white-space: pre-wrap; font-size: 0.92rem; }
+.selfscore { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+/* Progress */
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar { display: grid; grid-template-columns: minmax(0, 200px) 1fr 52px; gap: 10px; align-items: center; font-size: 0.88rem; }
+.bar .track { height: 10px; background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+.bar .fill { height: 100%; border-radius: 99px; }
+table.hist { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+table.hist th, table.hist td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+table.hist td.mono { text-align: right; }
+.tbl { overflow-x: auto; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { font: inherit; font-size: 0.82rem; border: 1px solid var(--line); background: var(--sheet); color: var(--fg); border-radius: 99px; padding: 4px 12px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--fg); color: var(--sheet); border-color: var(--fg); }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .fill { transition: width .4s ease; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="stack" style="gap:6px">
+      <span class="label">Noviembre 2026 → Febrero 2027</span>
+      <h1>Cuaderno C1 y Analista</h1>
+      <p class="muted">Cambridge C1 Advanced por la mañana, entrevista de analista junior por la tarde. Cada día tiene su prueba.</p>
+    </div>
+    <div class="countdowns">
+      <div class="cd"><div class="label">Examen C1</div><div class="big" id="cdExam">–</div><input type="date" id="examDate" aria-label="Fecha del examen C1"></div>
+      <div class="cd"><div class="label">Tests hechos</div><div class="big" id="cdDone">0</div><span class="muted" style="font-size:.8rem" id="cdAvg">media –</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="hoy" aria-selected="true">Hoy</button>
+    <button role="tab" data-tab="calendario">Calendario</button>
+    <button role="tab" data-tab="c1">Tests C1</button>
+    <button role="tab" data-tab="analyst">Tests Analista</button>
+    <button role="tab" data-tab="abiertas">Writing, casos y fit</button>
+    <button role="tab" data-tab="progreso">Progreso</button>
+  </nav>
+
+  <main id="view"><div class="empty">Cargando pruebas…</div></main>
+</div>
+
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('cq:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('cq:' + k, JSON.stringify(v)); } catch {} },
+  };
+
+  let DATA = { sets: [], openTasks: [] };
+  const byId = {};
+  let attempts = store.get('attempts', []);   // {id, kind:'set'|'open', score (0-100), date}
+  const PLAN_START = new Date(2026, 10, 9);    // lunes 9 nov 2026
+  const DEFAULT_EXAM = '2027-01-30';
+
+  const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const fmt = d => d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  const examDate = () => { const v = store.get('exam', DEFAULT_EXAM); const [y, m, d] = v.split('-').map(Number); return new Date(y, m - 1, d); };
+
+  const lastScore = id => { const a = attempts.filter(x => x.id === id); return a.length ? a[a.length - 1].score : null; };
+  const bestScore = id => { const a = attempts.filter(x => x.id === id); return a.length ? Math.max(...a.map(x => x.score)) : null; };
+  const doneOn = (id, day) => attempts.some(x => x.id === id && x.date === day);
+
+  /* ---------- Plan ----------
+     Ritmo semanal: Lun UoE (2 partes) · Mar técnica analista · Mié Reading/vocab · Jue técnica analista
+     Vie Writing · Sáb caso/fit/Excel · Dom Speaking + repaso del peor test.
+     Fases: Base (sem 1-4) · Consolidación (5-8) · Simulacro (9 → examen). */
+  function buildPlan() {
+    const exam = examDate();
+    const weeks = [];
+    const uoe = ['uoe1-p1', 'uoe1-p2', 'uoe1-p3', 'uoe1-p4', 'uoe2-p1', 'uoe2-p2', 'uoe2-p3', 'uoe2-p4'];
+    const read = ['read-p5', 'vocab-c1', 'read-p7'];
+    const tech = ['acct', 'val', 'lbo', 'ma', 'mkt', 'brain'];
+    const openOf = (track, areas) => DATA.openTasks.filter(t => t.track === track && areas.includes(t.area)).map(t => t.id);
+    const writing = openOf('c1', ['Writing']);
+    const speaking = openOf('c1', ['Speaking']);
+    const sat = [...openOf('analyst', ['Casos']), ...openOf('analyst', ['Entrevista fit']), ...openOf('analyst', ['Excel'])];
+    // interleave Saturday kinds so a case and a fit question alternate
+    const satMix = []; const cs = openOf('analyst', ['Casos']), fit = openOf('analyst', ['Entrevista fit']), xl = openOf('analyst', ['Excel']);
+    for (let i = 0; i < Math.max(cs.length, fit.length, xl.length); i++) { [cs[i], fit[i], xl[i]].forEach(x => x && satMix.push(x)); }
+    const pick = (arr, i) => arr.length ? arr[i % arr.length] : null;
+    let u = 0, r = 0, t = 0;
+    for (let w = 0; ; w++) {
+      const mon = new Date(PLAN_START); mon.setDate(mon.getDate() + w * 7);
+      if (mon > exam) break;
+      const phase = w < 4 ? 'Base' : w < 8 ? 'Consolidación' : 'Simulacro';
+      const days = [];
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(mon); day.setDate(day.getDate() + d);
+        const tasks = [];
+        if (day <= exam) {
+          if (d === 0) {
+            if (phase === 'Simulacro') { const s = w % 2 ? 'uoe2' : 'uoe1'; ['p1', 'p2', 'p3', 'p4'].forEach(p => tasks.push(`${s}-${p}`)); }
+            else { tasks.push(pick(uoe, u++), pick(uoe, u++)); }
+          }
+          if (d === 1 || d === 3) tasks.push(pick(tech, t++));
+          if (d === 2) { tasks.push(pick(read, r++)); if (phase === 'Simulacro') tasks.push(pick(read, r++)); }
+          if (d === 4) tasks.push(pick(writing, w));
+          if (d === 5) tasks.push(pick(satMix.length ? satMix : sat, w));
+          if (d === 6) { tasks.push(pick(speaking, w)); tasks.push('@worst'); }
+        }
+        days.push({ date: day, tasks: tasks.filter(Boolean) });
+      }
+      weeks.push({ n: w + 1, phase, mon, days });
+    }
+    return weeks;
+  }
+  function worstId() {
+    const ids = [...new Set(attempts.filter(a => a.kind === 'set').map(a => a.id))];
+    if (!ids.length) return 'acct';
+    return ids.sort((a, b) => lastScore(a) - lastScore(b))[0];
+  }
+  const resolve = id => id === '@worst' ? worstId() : id;
+
+  /* ---------- Rendering ---------- */
+  let tab = 'hoy';
+  function show(t, arg) {
+    tab = t;
+    document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    store.set('tab', t);
+    stopTimer();
+    ({ hoy: viewToday, calendario: viewCalendar, c1: () => viewList('c1'), analyst: () => viewList('analyst'), abiertas: viewOpen, progreso: viewProgress }[t] || viewToday)(arg);
+    updateHeader();
+  }
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) show(b.dataset.tab); });
+
+  function updateHeader() {
+    const days = Math.round((examDate() - today()) / 864e5);
+    $('#cdExam').textContent = days >= 0 ? `${days} días` : 'hecho';
+    $('#examDate').value = iso(examDate());
+    const scores = attempts.map(a => a.score);
+    $('#cdDone').textContent = attempts.length;
+    $('#cdAvg').textContent = scores.length ? `media ${Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)}%` : 'media –';
+  }
+  $('#examDate').addEventListener('change', e => { if (e.target.value) { store.set('exam', e.target.value); show(tab); } });
+
+  function chipFor(id) {
+    const s = bestScore(id);
+    if (s == null) return '';
+    return `<span class="chip ${s >= 70 ? 'done' : 'score-low'}">mejor ${s}%</span>`;
+  }
+  function taskCard(id, opts = {}) {
+    const x = byId[id]; if (!x) return '';
+    const n = x.items ? `${x.items.length} preguntas` : 'tarea abierta';
+    return `<div class="card ${x.track}">
+      <div class="meta"><span class="chip ${x.track}">${x.track === 'c1' ? 'C1' : 'Analista'}</span><span class="label">${esc(x.area)}</span>${chipFor(id)}</div>
+      <h3>${esc(x.title)}</h3>
+      <p class="muted" style="font-size:.85rem">${n} · ${x.minutes} min${opts.note ? ' · ' + esc(opts.note) : ''}</p>
+      <div class="row"><span></span><button class="btn small" data-open="${esc(id)}">${lastScore(id) == null ? 'Empezar' : 'Repetir'}</button></div>
+    </div>`;
+  }
+  document.addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openItem(b.dataset.open); });
+
+  function viewToday() {
+    const plan = buildPlan();
+    const t = today();
+    let wk = null, day = null;
+    plan.forEach(w => w.days.forEach(d => { if (iso(d.date) === iso(t)) { wk = w; day = d; } }));
+    let html = '';
+    if (!day) {
+      const before = t < PLAN_START;
+      html = `<div class="sheet stack">
+        <span class="label">${before ? 'Antes de empezar' : 'Fuera del plan'}</span>
+        <h2>${before ? 'Prueba diagnóstica: este fin de semana' : 'Repaso libre'}</h2>
+        <p>${before ? 'El plan arranca el lunes 9 de noviembre. Haz estas tres pruebas antes para saber de dónde partes; el domingo de cada semana el plan te devuelve tu test más flojo.' : 'Elige un test de las pestañas o repite tu peor resultado.'}</p>
+        <div class="grid">${(before ? ['uoe1-p4', 'read-p5', 'acct'] : [worstId()]).map(id => taskCard(id)).join('')}</div>
+      </div>`;
+    } else {
+      const ids = day.tasks.map(resolve);
+      const tomorrow = new Date(t); tomorrow.setDate(t.getDate() + 1);
+      let next = null; plan.forEach(w => w.days.forEach(d => { if (iso(d.date) === iso(tomorrow)) next = d; }));
+      html = `<div class="today">
+        <div class="sheet stack">
+          <span class="label">Semana ${wk.n} · ${DAYS[(t.getDay() + 6) % 7]} ${fmt(t)}</span>
+          <div class="phase">Fase: ${wk.phase}</div>
+          <p class="muted">${phaseNote(wk.phase)}</p>
+        </div>
+        <div class="sheet stack">
+          <span class="label">Mañana</span>
+          ${next && next.tasks.length ? next.tasks.map(id => { const x = byId[resolve(id)]; return x ? `<p>${esc(x.title)} <span class="muted">· ${x.minutes} min</span></p>` : ''; }).join('') : '<p class="muted">Descanso.</p>'}
+        </div>
+      </div>
+      <h2 style="margin:20px 0 10px">Hoy toca</h2>
+      <div class="grid">${ids.map((id, i) => taskCard(id, { note: day.tasks[i] === '@worst' ? 'tu peor nota, repítelo' : (doneOn(id, iso(t)) ? 'hecho hoy' : '') })).join('')}</div>`;
+    }
+    $('#view').innerHTML = html;
+  }
+  function phaseNote(p) {
+    return {
+      'Base': 'Haz cada prueba sin cronómetro estricto. Lee todas las explicaciones, también las de los aciertos, y apunta en una libreta cada colocación o fórmula nueva.',
+      'Consolidación': 'Cronómetro activado y sin consultar nada. Objetivo: 70% o más en cada test. Lo que baje de 70% vuelve el domingo.',
+      'Simulacro': 'Lunes con Use of English completo (partes 1–4) en 45 minutos seguidos. Writing en 90 minutos por las dos tareas. Analista: responde en voz alta en inglés, como en la entrevista.',
+    }[p];
+  }
+
+  function viewCalendar() {
+    const plan = buildPlan();
+    const t = iso(today());
+    $('#view').innerHTML = `<div class="sheet stack">
+      <div class="runner-head"><h2>Calendario hasta el examen</h2><span class="muted" style="font-size:.85rem"><span class="chip c1">C1</span> <span class="chip analyst">Analista</span> · pulsa una tarea para hacerla</span></div>
+      <div class="cal-scroll"><div class="cal-inner weeks">
+        <div class="week"><div></div>${DAYS.map(d => `<div class="label">${d}</div>`).join('')}</div>
+        ${plan.map(w => `<div class="week">
+          <div class="wk"><b>Semana ${w.n}</b>${fmt(w.mon)}<br>${w.phase}</div>
+          ${w.days.map(d => {
+            const di = iso(d.date);
+            return `<div class="day ${di === t ? 'is-today' : ''} ${di < t ? 'past' : ''}"><span class="d">${d.date.getDate()}</span>
+              ${d.tasks.map(raw => { const id = resolve(raw); const x = byId[id]; if (!x) return ''; const label = raw === '@worst' ? 'Repaso: ' + x.title : x.title;
+                return `<button class="task ${x.track} ${doneOn(id, di) ? 'done' : ''}" data-open="${esc(id)}">${esc(label)}</button>`; }).join('')}
+            </div>`; }).join('')}
+        </div>`).join('')}
+      </div></div>
+    </div>`;
+  }
+
+  function viewList(track, area) {
+    const sets = DATA.sets.filter(s => s.track === track);
+    const areas = [...new Set(sets.map(s => s.area))];
+    const cur = area && areas.includes(area) ? area : null;
+    $('#view').innerHTML = `<div class="stack">
+      <div class="filters" id="flt"><button aria-pressed="${!cur}" data-a="">Todas</button>${areas.map(a => `<button aria-pressed="${cur === a}" data-a="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+      <div class="grid">${sets.filter(s => !cur || s.area === cur).map(s => taskCard(s.id)).join('') || '<div class="empty">Sin pruebas.</div>'}</div>
+    </div>`;
+    $('#flt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) viewList(track, b.dataset.a || null); });
+  }
+
+  function viewOpen(filter) {
+    const tasks = DATA.openTasks;
+    const areas = [...new Set(tasks.map(t => t.area))];
+    const cur = filter && areas.includes(filter) ? filter : null;
+    $('#view').innerHTML = `<div class="stack">
+      <p class="muted">Escribe o responde en voz alta con el cronómetro, después compara con la checklist y la respuesta modelo y ponte nota.</p>
+      <div class="filters" id="flt"><button aria-pressed="${!cur}" data-a="">Todas</button>${areas.map(a => `<button aria-pressed="${cur === a}" data-a="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+      <div class="grid">${tasks.filter(t => !cur || t.area === cur).map(t => taskCard(t.id)).join('')}</div>
+    </div>`;
+    $('#flt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) viewOpen(b.dataset.a || null); });
+  }
+
+  function viewProgress() {
+    const areas = {};
+    attempts.forEach(a => { const x = byId[a.id]; if (!x) return; const k = `${x.track}|${x.area}`; (areas[k] = areas[k] || []).push(a.score); });
+    const rows = Object.entries(areas).map(([k, v]) => { const [track, area] = k.split('|'); return { track, area, avg: Math.round(v.reduce((a, b) => a + b, 0) / v.length), n: v.length }; }).sort((a, b) => a.avg - b.avg);
+    $('#view').innerHTML = `<div class="stack">
+      <div class="sheet stack"><h2>Nota media por área</h2>
+        ${rows.length ? `<div class="bars">${rows.map(r => `<div class="bar"><span>${esc(r.area)} <span class="muted">(${r.n})</span></span><div class="track"><div class="fill" style="width:${r.avg}%;background:var(--${r.track === 'c1' ? 'c1' : 'an'})"></div></div><span class="mono">${r.avg}%</span></div>`).join('')}</div>
+        <p class="muted" style="font-size:.85rem">Cambridge aprueba el C1 con 160 en la escala, aproximadamente un 60% de los puntos; apunta al 75% en práctica para tener margen.</p>`
+        : '<div class="empty">Aún no hay intentos. Tus notas se guardan en este navegador.</div>'}
+      </div>
+      <div class="sheet stack"><h2>Historial</h2>
+        ${attempts.length ? `<div class="tbl"><table class="hist"><thead><tr><th>Fecha</th><th>Prueba</th><th>Área</th><th style="text-align:right">Nota</th></tr></thead><tbody>
+        ${attempts.slice().reverse().map(a => { const x = byId[a.id] || {}; return `<tr><td class="mono" style="text-align:left">${a.date}</td><td>${esc(x.title || a.id)}</td><td>${esc(x.area || '')}</td><td class="mono">${a.score}%</td></tr>`; }).join('')}
+        </tbody></table></div>
+        <div><button class="btn ghost small" id="resetAsk">Borrar historial</button> <span id="resetConfirm" hidden>¿Seguro? <button class="btn small" id="resetYes">Sí, borrar</button> <button class="btn ghost small" id="resetNo">No</button></span></div>` : '<p class="muted">Vacío.</p>'}
+      </div>
+    </div>`;
+    const ask = $('#resetAsk');
+    if (ask) {
+      ask.onclick = () => { $('#resetConfirm').hidden = false; };
+      $('#resetNo').onclick = () => { $('#resetConfirm').hidden = true; };
+      $('#resetYes').onclick = () => { attempts = []; store.set('attempts', attempts); show('progreso'); };
+    }
+  }
+
+  /* ---------- Timer ---------- */
+  let timerId = null;
+  function startTimer(minutes) {
+    stopTimer();
+    const end = Date.now() + minutes * 60000;
+    const el = $('#timer');
+    const tick = () => {
+      if (!el.isConnected) return stopTimer();
+      const left = Math.round((end - Date.now()) / 1000), a = Math.abs(left);
+      el.textContent = `${left < 0 ? '+' : ''}${Math.floor(a / 60)}:${String(a % 60).padStart(2, '0')}`;
+      el.classList.toggle('over', left < 0);
+    };
+    tick(); timerId = setInterval(tick, 1000);
+  }
+  function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+
+  /* ---------- Test runner ---------- */
+  const norm = s => String(s ?? '').toLowerCase().replace(/[’‘`]/g, "'").replace(/[.,;:!?"]+$/g, '').replace(/^[.,;:!?"]+/g, '').replace(/\s+/g, ' ').trim();
+  const LET = ['A', 'B', 'C', 'D', 'E', 'F'];
+  function passageHtml(p) {
+    return esc(p).split(/\n\s*\n/).map(par => `<p>${par.replace(/\n/g, '<br>').replace(/\((\d{1,2})\)\s*_{2,}|\((\d{1,2})\)/g, (m, a, b) => `<span class="gap">(${a || b}) ____</span>`)}</p>`).join('');
+  }
+  function itemHtml(s, it) {
+    let prompt;
+    if (it.prompt.includes('||')) {
+      const [a, k, b] = it.prompt.split('||').map(x => x.trim());
+      prompt = `<div class="kwt"><span>${esc(a)}</span><span class="key">${esc(k)}</span><span>${esc(b)}</span></div>`;
+    } else prompt = `<div class="prompt">${esc(it.prompt)}</div>`;
+    const ctl = it.options && it.options.length
+      ? `<div class="opts">${it.options.map((o, i) => `<label id="l-${it.n}-${i}"><input type="radio" name="q${it.n}" value="${LET[i]}" id="r-${s.id}-${it.n}-${i}"><span class="L">${LET[i]}</span><span>${esc(o.replace(/^[A-F][\).:]\s+/, ''))}</span></label>`).join('')}</div>`
+      : `<input class="txt" id="t-${s.id}-${it.n}" autocomplete="off" spellcheck="false" placeholder="Tu respuesta">`;
+    return `<div class="q" id="q-${it.n}"><span class="qn">${it.n}</span>${prompt}${ctl}<div class="expl" id="e-${it.n}" hidden></div></div>`;
+  }
+  function openItem(id) {
+    const x = byId[id]; if (!x) return;
+    stopTimer();
+    window.scrollTo({ top: 0 });
+    if (x.items) runSet(x); else runOpen(x);
+  }
+  function runSet(s) {
+    const back = s.track;
+    const items = `<div class="stack" id="items">${s.items.map(it => itemHtml(s, it)).join('')}</div>`;
+    $('#view').innerHTML = `<div class="stack">
+      <div class="sheet runner-head">
+        <div class="stack" style="gap:4px"><div class="meta" style="display:flex;gap:6px"><span class="chip ${s.track}">${s.track === 'c1' ? 'C1' : 'Analista'}</span><span class="label">${esc(s.area)}</span></div><h2>${esc(s.title)}</h2></div>
+        <div style="display:flex;gap:10px;align-items:center"><span class="timer" id="timer"></span><button class="btn ghost small" id="back">Volver</button></div>
+      </div>
+      <div class="sheet"><p>${esc(s.instructions)}</p></div>
+      ${s.passage ? `<div class="split"><div class="sheet passage-col"><div class="passage">${passageHtml(s.passage)}</div></div><div class="sheet">${items}</div></div>` : `<div class="sheet">${items}</div>`}
+      <div class="sheet stack" id="foot"><div><button class="btn" id="grade">Corregir</button></div></div>
+    </div>`;
+    startTimer(s.minutes);
+    $('#back').onclick = () => show(back === 'c1' ? 'c1' : 'analyst');
+    $('#grade').onclick = () => grade(s);
+  }
+  function grade(s) {
+    stopTimer();
+    let ok = 0;
+    s.items.forEach(it => {
+      const e = $(`#e-${it.n}`);
+      let right;
+      if (it.options && it.options.length) {
+        const sel = document.querySelector(`input[name="q${it.n}"]:checked`);
+        const correctIdx = LET.indexOf(String(it.answer).trim().toUpperCase().charAt(0));
+        right = sel && sel.value === LET[correctIdx];
+        it.options.forEach((_, i) => {
+          const l = $(`#l-${it.n}-${i}`);
+          l.classList.toggle('correct', i === correctIdx);
+          l.classList.toggle('wrong', !!sel && sel.value === LET[i] && i !== correctIdx);
+        });
+        e.innerHTML = `<b>${LET[correctIdx]}</b> · ${esc(it.explanation)}`;
+      } else {
+        const inp = $(`#t-${s.id}-${it.n}`);
+        const val = norm(inp.value);
+        const okSet = [it.answer, ...(it.accept || [])].map(norm);
+        right = !!val && okSet.includes(val);
+        inp.classList.toggle('correct', right); inp.classList.toggle('wrong', !right);
+        e.innerHTML = `<b>${esc(it.answer)}</b>${it.accept && it.accept.length ? ` <span class="muted">(también: ${esc(it.accept.filter(a => norm(a) !== norm(it.answer)).join(', '))})</span>` : ''} · ${esc(it.explanation)}`;
+      }
+      e.hidden = false;
+      if (right) ok++;
+    });
+    const pct = Math.round(ok / s.items.length * 100);
+    attempts.push({ id: s.id, kind: 'set', score: pct, date: iso(today()) });
+    store.set('attempts', attempts);
+    updateHeader();
+    $('#foot').innerHTML = `<div class="result"><span class="score">${ok}/${s.items.length}</span><div><b>${pct}%</b><p class="muted">${pct >= 80 ? 'Nivel de examen. Pasa a la siguiente.' : pct >= 60 ? 'Aprobado justo. Repasa las explicaciones de los fallos y repítelo el domingo.' : 'Por debajo del objetivo. Lee todas las explicaciones y vuelve a hacerlo dentro de 3 días.'}</p></div>
+      <button class="btn ghost small" id="again">Repetir</button><button class="btn small" id="home">Volver a hoy</button></div>`;
+    $('#again').onclick = () => openItem(s.id);
+    $('#home').onclick = () => show('hoy');
+  }
+  function runOpen(t) {
+    const key = 'draft:' + t.id;
+    $('#view').innerHTML = `<div class="stack">
+      <div class="sheet runner-head">
+        <div class="stack" style="gap:4px"><div style="display:flex;gap:6px"><span class="chip ${t.track}">${t.track === 'c1' ? 'C1' : 'Analista'}</span><span class="label">${esc(t.area)}</span></div><h2>${esc(t.title)}</h2></div>
+        <div style="display:flex;gap:10px;align-items:center"><span class="timer" id="timer"></span><button class="btn ghost small" id="back">Volver</button></div>
+      </div>
+      <div class="sheet"><div class="model">${esc(t.prompt)}</div></div>
+      <div class="sheet stack"><label class="label" for="draft">Tu respuesta (se guarda sola)</label><textarea id="draft">${esc(store.get(key, ''))}</textarea><span class="muted mono" id="wc" style="font-size:.8rem"></span>
+        <div><button class="btn" id="reveal">Ver checklist y respuesta modelo</button></div></div>
+      <div id="after" hidden class="stack">
+        <div class="sheet stack"><h3>Checklist de corrección</h3><div class="guidance">${esc(t.guidance)}</div></div>
+        <div class="sheet stack"><h3>Respuesta modelo</h3><div class="model">${esc(t.modelAnswer)}</div></div>
+        <div class="sheet stack"><h3>Ponte nota</h3><div class="selfscore" id="ss">${[1, 2, 3, 4, 5].map(n => `<button class="btn ghost small" data-s="${n}">${n} · ${['muy flojo', 'flojo', 'aceptable', 'bien', 'nivel examen'][n - 1]}</button>`).join('')}</div><p class="muted" id="ssMsg"></p></div>
+      </div>
+    </div>`;
+    startTimer(t.minutes);
+    const ta = $('#draft');
+    const wc = () => { const n = (ta.value.trim().match(/\S+/g) || []).length; $('#wc').textContent = `${n} palabras`; };
+    wc();
+    ta.addEventListener('input', () => { store.set(key, ta.value); wc(); });
+    $('#back').onclick = () => show('abiertas');
+    $('#reveal').onclick = () => { $('#after').hidden = false; stopTimer(); $('#after').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    $('#ss').addEventListener('click', e => {
+      const b = e.target.closest('button[data-s]'); if (!b) return;
+      const score = Number(b.dataset.s) * 20;
+      attempts.push({ id: t.id, kind: 'open', score, date: iso(today()) });
+      store.set('attempts', attempts); updateHeader();
+      $('#ssMsg').textContent = `Guardado: ${score}%.`;
+    });
+  }
+
+  /* ---------- Boot ---------- */
+  fetch('banks.json').then(r => r.json()).then(d => {
+    DATA = { sets: d.sets || [], openTasks: d.openTasks || [] };
+    [...DATA.sets, ...DATA.openTasks].forEach(x => { byId[x.id] = x; });
+    const h = (location.hash || '').slice(1);
+    show(['hoy', 'calendario', 'c1', 'analyst', 'abiertas', 'progreso'].includes(h) ? h : store.get('tab', 'hoy'));
+  }).catch(() => { $('#view').innerHTML = '<div class="empty">No se pudieron cargar las pruebas. Recarga la página.</div>'; });
+})();
+</script>
+</body>
+</html>
