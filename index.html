@@ -110,6 +110,16 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .day button.task.done { text-decoration: line-through; opacity: 0.7; }
 .cal-scroll { overflow-x: auto; }
 .cal-inner { min-width: 760px; }
+.day .dn { display: none; }
+@media (max-width: 700px) {
+  .cal-inner { min-width: 0; }
+  .week { grid-template-columns: 1fr; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .week.head, .day.empty { display: none; }
+  .week .wk { padding-top: 0; }
+  .day { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .day .d { min-width: 52px; }
+  .day .dn { display: inline; }
+}
 
 /* Test runner */
 .runner-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -352,12 +362,12 @@ table.hist td.mono { text-align: right; }
     $('#view').innerHTML = `<div class="sheet stack">
       <div class="runner-head"><h2>Calendario hasta el examen</h2><span class="muted" style="font-size:.85rem"><span class="chip c1">C1</span> <span class="chip analyst">Analista</span> · pulsa una tarea para hacerla</span></div>
       <div class="cal-scroll"><div class="cal-inner weeks">
-        <div class="week"><div></div>${DAYS.map(d => `<div class="label">${d}</div>`).join('')}</div>
+        <div class="week head"><div></div>${DAYS.map(d => `<div class="label">${d}</div>`).join('')}</div>
         ${plan.map(w => `<div class="week">
           <div class="wk"><b>Semana ${w.n}</b>${fmt(w.mon)}<br>${w.phase}</div>
-          ${w.days.map(d => {
+          ${w.days.map((d, i) => {
             const di = iso(d.date);
-            return `<div class="day ${di === t ? 'is-today' : ''} ${di < t ? 'past' : ''}"><span class="d">${d.date.getDate()}</span>
+            return `<div class="day ${di === t ? 'is-today' : ''} ${di < t ? 'past' : ''} ${d.tasks.length ? '' : 'empty'}"><span class="d"><span class="dn">${DAYS[i]} </span>${d.date.getDate()}</span>
               ${d.tasks.map(raw => { const id = resolve(raw); const x = byId[id]; if (!x) return ''; const label = raw === '@worst' ? 'Repaso: ' + x.title : x.title;
                 return `<button class="task ${x.track} ${doneOn(id, di) ? 'done' : ''}" data-open="${esc(id)}">${esc(label)}</button>`; }).join('')}
             </div>`; }).join('')}
